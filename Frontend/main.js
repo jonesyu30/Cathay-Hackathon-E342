@@ -45,11 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auto Scroll to Bottom
         scrollToBottom();
 
-        // Simulate Assistant Response
-        setTimeout(() => {
-          appendAssistantMessage("Thank you for reaching out! I'm processing your request regarding: \"" + text + "\"");
+        callBackendAPI(text).then(response => {
+          appendAssistantMessage(response);
           scrollToBottom();
-        }, 800);
+        });
+
+        // Simulate Assistant Response
+        // setTimeout(() => {
+        //   appendAssistantMessage("Thank you for reaching out! I'm processing your request regarding: \"" + text + "\"");
+        //   scrollToBottom();
+        // }, 800);
       };
 
       // 4. Quick Action Chip Click Handler
@@ -59,11 +64,17 @@ document.addEventListener('DOMContentLoaded', () => {
           appendUserMessage(promptText);
           scrollToBottom();
 
-          // Response Simulation
-          setTimeout(() => {
-            appendAssistantMessage("I can certainly assist you with that. Please provide your booking reference (PNR) or ticket number to proceed.");
+
+          // Response
+          callBackendAPI(promptText).then(response => {
+            appendAssistantMessage(response);
             scrollToBottom();
-          }, 800);
+          });
+          // Response Simulation
+          // setTimeout(() => {
+          //   appendAssistantMessage("I can certainly assist you with that. Please provide your booking reference (PNR) or ticket number to proceed.");
+          //   scrollToBottom();
+          // }, 800);
         });
       });
 
@@ -94,5 +105,21 @@ document.addEventListener('DOMContentLoaded', () => {
       // Scroll helper
       function scrollToBottom() {
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+      }
+
+      // API Call Function
+      async function callBackendAPI(userMessage) {
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage })
+          });
+          const data = await response.json();
+          return data.response;
+        } catch (error) {
+          console.error('Error calling backend API:', error);
+          return "Sorry, I couldn't process your request at the moment.";
+        }
       }
     });
