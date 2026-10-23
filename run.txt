@@ -1,0 +1,35 @@
+Run Ask Vera so the page talks to the backend
+
+1. Start PostgreSQL if it is not already running:
+   brew services start postgresql@16
+
+   Ollama must also be running, with both models downloaded:
+   ollama pull qwen3:4b-instruct
+   ollama pull nomic-embed-text
+
+   Load the official policy chunks once, from the backend folder:
+   .venv/bin/python knowledge.py
+
+2. Start the server from the backend folder:
+   cd backend
+   .venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+
+3. Open this address in a browser:
+   http://127.0.0.1:8000
+
+   Do not double-click Frontend/index.html. That opens the page by itself,
+   and the chat cannot reach the backend.
+
+4. Click "Start chat". Type a message and press SEND, or click a shortcut chip.
+   The page sends the text to http://127.0.0.1:8000/api/chat.
+   The backend asks Qwen, through Ollama, for the reply.
+   The page keeps this chat in the browser and sends those recent turns with the new message.
+   Closing the tab clears that working memory.
+   Qwen can call save_chat_message when you ask it to remember a note. That note is the row written to PostgreSQL.
+   For an official policy question, Qwen calls search_policy. That tool filters the stored Cathay and HKIA passages by need group, then ranks them by similarity.
+   The page then shows the reply. The first reply can take a while.
+
+5. Optional: look at the saved rows:
+   /opt/homebrew/opt/postgresql@16/bin/psql -h 127.0.0.1 -U cathay -d cathay -c "SELECT id, role, content FROM chat_messages ORDER BY id;"
+
+Stop the server with Ctrl+C in the terminal from step 2.

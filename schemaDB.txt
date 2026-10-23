@@ -1,0 +1,196 @@
+Cathay accessibility catalog
+This is the database schema.
+The catalog below is how a passenger's needs are read.
+Policy search and chat notes are separate. They do not replace the catalog.
+
+How to read a result
+1. The passenger's group is groups.group_id.
+2. Needs for that group are needs rows with that group_id.
+3. If cathay_has_service is yes, the Cathay service is need_services.service_id, then services and service_actions.
+4. If airport_has_service is yes, the facility is needs.airport_service_id, then airport_services, airport_service_actions, and airport_service_legs. Offer it only when the passenger's departure, transit, or arrival airport matches airports and the leg matches.
+5. If both flags are no, say Cathay and the airport do not offer it. Still keep the need.
+6. Rules come from rule_links for that group_id. If need_id is filled, show the rule only when that need is assigned. show_when is the condition that turns the rule on.
+7. A blank source on an action means use the source on the parent service or airport service.
+
+Conventions
+- Ids are contiguous integers starting at 1.
+- cathay_has_service and airport_has_service are yes or no.
+- The name the passenger sees is service_name. On a Cathay need it matches services.service_name. On an airport need it matches airport_services.service_name.
+- group_name, rule_name, and the name column on airport_service_legs are copies. Join on the id.
+- source is a URL. It is the page with the full instructions.
+- Only Hong Kong (HKG, airport_id 1) is loaded. The airport tables can hold more airports.
+
+airports
+Primary key: airport_id
+Columns: airport_id, iata, name
+One row per airport. HKG is Hong Kong International Airport.
+
+airport_services
+Primary key: airport_service_id
+Foreign key: airport_id -> airports.airport_id
+Columns: airport_service_id, airport_id, service_name, description, source
+description is the short text to say to the passenger. source is the airport page.
+
+airport_service_actions
+Primary key: action_id
+Foreign key: airport_service_id -> airport_services.airport_service_id
+Columns: action_id, airport_service_id, step, when, stage, who_to_contact, what_to_do, source
+step starts at 1 for each airport service. Say the step whose stage matches the leg. A departure leg uses check-in or boarding. A transit or arrival leg uses arrival and transfer.
+stage is before travel, check-in, boarding, in flight, or arrival and transfer. One step has one stage.
+when is the notice or the moment. who_to_contact is the party, or None. On arrival and transfer it is Airport personnel.
+what_to_do is the instruction. source is blank when it is the same page as airport_services.source.
+
+airport_service_legs
+Primary key: (airport_service_id, leg)
+Foreign key: airport_service_id -> airport_services.airport_service_id
+Columns: airport_service_id, name, leg
+leg is departure, transit, or arrival. Offer the facility only on those legs.
+
+groups
+Primary key: group_id
+Columns: group_id, name, acronym
+acronym is the short code used when searching policy text.
+1 Mobility & Physical, MOB
+2 Visual, VIS
+3 Hearing, HEAR
+4 Cognitive Support, COG
+5 Neurodivergence, ND
+6 Mental health & emotional, MH
+7 Sensory sensitivity, SEN
+8 Communication & Language, COM
+9 Medical & Health, MED
+GEN is not a group. It is only a search filter for a general overview or a complaint.
+
+tags
+Primary key: tag_id
+Foreign key: group_id -> groups.group_id
+Columns: tag_id, group_id, group_name, name, detail
+A tag Cathay already uses. Only Mobility, Visual, and Hearing have tags.
+WCHC, WCHS, and WCHR are Mobility. Blind is Visual. Deaf is Hearing.
+detail says where the attendant stops for WCHS and WCHR. It is blank when the linked services already say what the tag includes.
+The other groups have no tag. Their choices are needs, yes or no.
+
+tag_services
+Primary key: (tag_id, service_id)
+Foreign key: tag_id -> tags.tag_id
+Foreign key: service_id -> services.service_id
+Columns: tag_id, tag_name, service_id, service_name
+The services written once when that tag is saved. tag_name and service_name are copies. Join on the id.
+WCHS and WCHR each link only to Airport wheelchair attendant. The destination is tags.detail.
+
+needs
+Primary key: need_id
+Foreign key: group_id -> groups.group_id
+Foreign key: airport_service_id -> airport_services.airport_service_id, only when airport_has_service is yes
+Columns: need_id, group_id, group_name, service_name, cathay_has_service, airport_has_service, airport_service_id
+One row is one service offered inside one group. The same Cathay service can appear as a separate need in more than one group.
+cathay_has_service yes means follow need_services.
+airport_has_service yes means follow airport_service_id. airport_service_id is blank otherwise.
+Both no means the service is not offered. Sign language and text reminders are the rows in that state.
+
+services
+Primary key: service_id
+Columns: service_id, source_group, service_name, description, source
+A Cathay service, stored once. source_group is the Cathay page it came from, which can differ from the passenger's group.
+description is the short text to say to the passenger. source is the Cathay page.
+
+service_actions
+Primary key: action_id
+Foreign key: service_id -> services.service_id
+Columns: action_id, service_id, step, when, stage, who_to_contact, what_to_do, source
+step starts at 1 for each service. Say the steps of the current stage in that order.
+stage is before travel, check-in, boarding, in flight, or arrival and transfer. One step has one stage. A step that named two moments is stored as two steps.
+when is the notice or the moment. who_to_contact is the party, or None. On arrival and transfer it is Airport personnel.
+what_to_do is the instruction. source is blank when it is the same page as services.source. Fill it when that step comes from a different page.
+
+need_services
+Primary key: (need_id, service_id)
+Foreign key: need_id -> needs.need_id
+Foreign key: service_id -> services.service_id
+Columns: need_id, service_id
+Use this only when needs.cathay_has_service is yes. One need has one service. The service text is not copied here.
+
+rules
+Primary key: rule_id
+Columns: rule_id, name, notice, who_to_contact, applies_when, requirement, source
+A limit Cathay states. It is not a service the passenger requests.
+requirement is the sentence to say. source is the Cathay page.
+
+rule_links
+Primary key: rule_link_id
+Foreign key: rule_id -> rules.rule_id
+Foreign key: group_id -> groups.group_id
+Foreign key: need_id -> needs.need_id, blank when the rule is for the whole group
+Columns: rule_link_id, rule_id, rule_name, group_id, group_name, need_id, service_name, show_when
+Show the rule when the passenger is in that group and show_when matches their answer.
+If need_id is filled, also require that need to be assigned.
+
+Passenger side
+These tables hold people and trips. The catalog above is not personal data.
+A missing survey answer means the question was not asked. yes and no stay until the passenger changes that answer.
+
+passengers
+Primary key: passenger_id
+Columns: passenger_id, name, birth_year
+
+profile_groups
+Primary key: (passenger_id, group_id)
+Foreign key: passenger_id -> passengers.passenger_id
+Foreign key: group_id -> groups.group_id
+Foreign key: tag_id -> tags.tag_id, blank when this group has no tag
+Columns: passenger_id, group_id, tag_id
+One row per group the passenger selected. tag_id is WCHC, WCHS, WCHR, Blind, or Deaf.
+Cognitive Support, Neurodivergence, Mental health, Sensory sensitivity, Communication, and Medical leave tag_id blank.
+Mobility, Visual, and Hearing also leave it blank when the survey produced no tag.
+
+survey_answers
+Primary key: one row per passenger and one of service_id, airport_service_id, or need_id
+Foreign key: passenger_id -> passengers.passenger_id
+Foreign key: service_id -> services.service_id
+Foreign key: airport_service_id -> airport_services.airport_service_id
+Foreign key: need_id -> needs.need_id
+Columns: passenger_id, service_id, airport_service_id, need_id, answer
+Exactly one of service_id, airport_service_id, and need_id is filled.
+answer is yes or no.
+Saving WCHC, Blind, or Deaf writes a yes for each service in tag_services.
+Saving WCHS or WCHR writes a yes for Airport wheelchair attendant. The gate or the aircraft door is tags.detail.
+need_id is used only for Sign language and Text reminders.
+Sunflower lanyard is one row. Courtesy Channel is one row.
+
+bookings
+Primary key: booking_id
+Foreign key: passenger_id -> passengers.passenger_id
+Foreign key: departure_airport_id, transit_airport_id, arrival_airport_id -> airports.airport_id
+Columns: booking_id, passenger_id, departure_airport_id, transit_airport_id, arrival_airport_id, departs_at, party_size
+A blank transit_airport_id means no transit.
+departs_at is how a deadline is calculated. party_size is for a group of 10 or more wheelchairs.
+
+tasks
+Primary key: task_id
+Foreign key: booking_id -> bookings.booking_id
+Columns: task_id, booking_id, what_to_do, due_at, status
+status is pending or done.
+due_at is blank when Cathay states no deadline.
+The seat suggestion is an aisle seat with a movable armrest, not an exit row. It is not stored.
+The staff board is page data only. Flights and seats on that board are not a table.
+
+Policy search
+These rows are official Cathay and Hong Kong International Airport passages.
+They are not passenger data. The text is loaded from a local workbook. That workbook stays off git.
+
+knowledge_chunks
+Primary key: chunk_id
+Columns: chunk_id, organization, document_title, heading, need_groups, chunk_text, source_url, embedding
+chunk_id is text, not an integer.
+need_groups is a list of acronyms. A passage can name more than one. Values are the group acronyms, or GEN.
+chunk_text is the passage. source_url is the page it came from.
+embedding is a 768-number vector used to rank passages. It is not shown to the passenger.
+Two indexes: one on need_groups, and one on embedding for similarity search.
+
+Chat notes
+chat_messages
+Primary key: id
+Columns: id, role, content, created_at
+A note saved only when someone asks Vera to remember it.
+role is user or assistant. content is the note. created_at is the time it was saved.
+The open chat stays in the browser. It is not this table.

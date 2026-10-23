@@ -8,6 +8,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const chatInput = document.getElementById('chat-user-input');
       const chatMessagesContainer = document.getElementById('chat-messages-container');
       const optionChips = document.querySelectorAll('.option-chip');
+      const MEMORY_KEY = 'vera-working-memory';
+      const MEMORY_LIMIT = 8;
+
+      function loadWorkingMemory() {
+        try {
+          const saved = JSON.parse(sessionStorage.getItem(MEMORY_KEY) || '[]');
+          if (!Array.isArray(saved)) return [];
+          return saved.filter(turn =>
+            turn && (turn.role === 'user' || turn.role === 'assistant') && typeof turn.content === 'string'
+          ).slice(-MEMORY_LIMIT);
+        } catch (error) {
+          return [];
+        }
+      }
+
+      let workingMemory = loadWorkingMemory();
+      workingMemory.forEach(turn => {
+        if (turn.role === 'user') appendUserMessage(turn.content);
+        else appendAssistantMessage(turn.content);
+      });
+
+      function rememberTurn(role, content) {
+        workingMemory.push({ role, content });
+        workingMemory = workingMemory.slice(-MEMORY_LIMIT);
+        sessionStorage.setItem(MEMORY_KEY, JSON.stringify(workingMemory));
+      }
 
       // 1. Navigation View Switcher Logic
       window.switchScreenView = function(targetView) {
@@ -33,48 +59,50 @@ document.addEventListener('DOMContentLoaded', () => {
         switchScreenView('chat');
       });
 
+      async function sendToBackend(text) {
+        appendUserMessage(text);
+        const pending = appendAssistantMessage('Vera is thinking...');
+        scrollToBottom();
+
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, history: workingMemory }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || 'Request failed');
+          }
+          pending.meta.remove();
+          pending.bubble.remove();
+          rememberTurn('user', text);
+          rememberTurn('assistant', data.reply);
+          appendAssistantMessage(data.reply);
+        } catch (error) {
+          pending.meta.remove();
+          pending.bubble.remove();
+          const message = error instanceof TypeError
+            ? 'Vera could not answer. Is the backend and Ollama running?'
+            : (error.message || 'Vera could not answer. Is the backend and Ollama running?');
+          appendAssistantMessage(message);
+        }
+        scrollToBottom();
+      }
+
       // 3. User Message Sender Implementation
       window.handleUserSendMessage = function() {
         const text = chatInput.value.trim();
         if (!text) return;
-
-        // Append User Bubble
-        appendUserMessage(text);
         chatInput.value = '';
-
-        // Auto Scroll to Bottom
-        scrollToBottom();
-
-        callBackendAPI(text).then(response => {
-          appendAssistantMessage(response);
-          scrollToBottom();
-        });
-
-        // Simulate Assistant Response
-        // setTimeout(() => {
-        //   appendAssistantMessage("Thank you for reaching out! I'm processing your request regarding: \"" + text + "\"");
-        //   scrollToBottom();
-        // }, 800);
+        sendToBackend(text);
       };
 
       // 4. Quick Action Chip Click Handler
       optionChips.forEach(chip => {
         chip.addEventListener('click', () => {
           const promptText = chip.getAttribute('data-prompt') || chip.innerText.trim();
-          appendUserMessage(promptText);
-          scrollToBottom();
-
-
-          // Response
-          callBackendAPI(promptText).then(response => {
-            appendAssistantMessage(response);
-            scrollToBottom();
-          });
-          // Response Simulation
-          // setTimeout(() => {
-          //   appendAssistantMessage("I can certainly assist you with that. Please provide your booking reference (PNR) or ticket number to proceed.");
-          //   scrollToBottom();
-          // }, 800);
+          sendToBackend(promptText);
         });
       });
 
@@ -100,26 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         chatMessagesContainer.appendChild(meta);
         chatMessagesContainer.appendChild(botBubble);
+        return { meta, bubble: botBubble };
       }
 
       // Scroll helper
       function scrollToBottom() {
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-      }
-
-      // API Call Function
-      async function callBackendAPI(userMessage) {
-        try {
-          const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: userMessage })
-          });
-          const data = await response.json();
-          return data.response;
-        } catch (error) {
-          console.error('Error calling backend API:', error);
-          return "Sorry, I couldn't process your request at the moment.";
-        }
       }
     });

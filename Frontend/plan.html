@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your trip plan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./plan.css">
+</head>
+<body class="phone-page">
+    <p class="outside"><a href="./staff.html">Staff board</a></p>
+    <div class="phone">
+        <header class="modal-header">
+            <div class="header-spacer"></div>
+            <div class="header-logo">
+                <img src="https://companieslogo.com/img/orig/0293.HK-ef2d48dd.png?t=1746518351" alt="Cathay Pacific">
+            </div>
+            <div class="header-spacer"></div>
+        </header>
+        <main class="phone-main custom-scrollbar">
+            <div class="people" id="people" role="group" aria-label="Passengers"></div>
+            <div id="plan"></div>
+        </main>
+    </div>
+    <script src="./plan-data.js"></script>
+    <script src="./plan-build.js"></script>
+    <script>
+        const people = document.getElementById("people");
+        const plan = document.getElementById("plan");
+        const params = new URLSearchParams(location.search);
+        let current = Number(params.get("id")) || 1;
+        let stageId = "before travel";
+
+        function doneKey(id, key) {
+            return `plan-done:${id}:${key}`;
+        }
+
+        function renderPeople() {
+            people.innerHTML = "";
+            CATHAY.passengers.forEach((person) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.textContent = person.name.split(" ")[0];
+                button.setAttribute("aria-pressed", String(person.passenger_id === current));
+                button.addEventListener("click", () => {
+                    current = person.passenger_id;
+                    history.replaceState(null, "", `?id=${current}`);
+                    renderPeople();
+                    renderPlan();
+                });
+                people.appendChild(button);
+            });
+        }
+
+        function renderPlan() {
+            const view = buildPlan(current);
+            const all = view.stages.flatMap((stage) => stage.items);
+            const taskCount = all.filter((item) => item.kind === "task").length;
+            const reminderCount = all.filter((item) => item.kind === "note").length;
+            const chosen = view.stages.find((stage) => stage.id === stageId) || view.stages[0];
+            const cards = orderedItems(view.passenger.passenger_id, chosen.items)
+                .map((item) => cardHtml(view.passenger.passenger_id, item))
+                .join("");
+            const stageButtons = view.stages.map((stage) => {
+                const pressed = stage.id === chosen.id;
+                return `<button type="button" data-stage="${stage.id}" aria-pressed="${pressed}">${stage.label}</button>`;
+            }).join("");
+            plan.innerHTML = `
+                <article class="trip">
+                    <h2>${escapeText(view.passenger.name)}</h2>
+                    <p class="meta">${tripLine(view.booking)} Hong Kong</p>
+                    <p class="meta">Deadlines use your time now, ${escapeText(customerZone())}.</p>
+                    <div class="counts">
+                        <div class="count"><strong>${taskCount}</strong><span>${taskCount === 1 ? "task" : "tasks"}</span></div>
+                        <div class="count"><strong>${reminderCount}</strong><span>${reminderCount === 1 ? "reminder" : "reminders"}</span></div>
+                    </div>
+                </article>
+                <div class="stage-row" role="group" aria-label="Travel stage">${stageButtons}</div>
+                <section class="stage">${cards || `<p class="meta">Nothing in this stage.</p>`}</section>`;
+            plan.querySelectorAll(".stage-row button").forEach((button) => {
+                button.addEventListener("click", () => {
+                    stageId = button.dataset.stage;
+                    renderPlan();
+                });
+            });
+            plan.querySelectorAll("input[type=checkbox]").forEach((box) => {
+                box.addEventListener("change", () => {
+                    sessionStorage.setItem(box.dataset.key, box.checked ? "1" : "0");
+                    settleCard(box.closest(".card"), box.checked);
+                });
+            });
+        }
+
+        function isDone(passengerId, item) {
+            return sessionStorage.getItem(doneKey(passengerId, item.key)) === "1";
+        }
+
+        function dueMs(item) {
+            return item.due && item.due.at ? Date.parse(item.due.at) : Number.POSITIVE_INFINITY;
+        }
+
+        function orderedItems(passengerId, items) {
+            const band = (item) => {
+                if (item.kind === "task" && isDone(passengerId, item)) return 2;
+                if (item.kind === "task") return 0;
+                return 1;
+            };
+            return items
+                .map((item, index) => ({ item, index }))
+                .sort((a, b) => {
+                    const bandDiff = band(a.item) - band(b.item);
+                    if (bandDiff) return bandDiff;
+                    if (band(a.item) !== 1) {
+                        const timeDiff = dueMs(a.item) - dueMs(b.item);
+                        if (timeDiff) return timeDiff;
+                    }
+                    return a.index - b.index;
+                })
+                .map((entry) => entry.item);
+        }
+
+        function sortCards(list) {
+            const cards = [...list.querySelectorAll(".card")];
+            const band = (card) => {
+                if (card.classList.contains("done")) return 2;
+                if (card.dataset.kind === "task") return 0;
+                return 1;
+            };
+            cards
+                .map((card, index) => ({ card, index }))
+                .sort((a, b) => {
+                    const bandDiff = band(a.card) - band(b.card);
+                    if (bandDiff) return bandDiff;
+                    if (band(a.card) !== 1) {
+                        const timeDiff = (Number(a.card.dataset.due) || Number.POSITIVE_INFINITY) - (Number(b.card.dataset.due) || Number.POSITIVE_INFINITY);
+                        if (timeDiff) return timeDiff;
+                    }
+                    return a.index - b.index;
+                })
+                .forEach((entry) => list.appendChild(entry.card));
+        }
+
+        function settleCard(card, checked) {
+            const list = card.parentElement;
+            const before = new Map([...list.querySelectorAll(".card")].map((el) => [el, el.getBoundingClientRect()]));
+            card.classList.toggle("done", checked);
+            sortCards(list);
+            list.querySelectorAll(".card").forEach((el) => {
+                const prev = before.get(el);
+                if (!prev) return;
+                const dy = prev.top - el.getBoundingClientRect().top;
+                if (Math.abs(dy) < 1) return;
+                el.animate(
+                    [{ transform: `translateY(${dy}px)` }, { transform: "translateY(0)" }],
+                    { duration: 480, easing: "cubic-bezier(.22,.8,.24,1)" }
+                );
+            });
+        }
+
+        function cardHtml(passengerId, item) {
+            const key = doneKey(passengerId, item.key);
+            const done = sessionStorage.getItem(key) === "1";
+            const check = item.kind === "task"
+                ? `<label class="check"><input type="checkbox" data-key="${key}" ${done ? "checked" : ""} aria-label="Mark done: ${escapeText(item.service)}"></label>`
+                : "";
+            const name = item.link
+                ? `<a class="service" href="${item.link.href}" target="_blank" rel="noopener">${escapeText(item.service)}</a>`
+                : `<p class="service nolink">${escapeText(item.service)}</p>`;
+            const description = item.description
+                ? `<details><summary>Service description</summary><p class="desc">${escapeText(item.description)}</p></details>`
+                : "";
+            const deadline = item.due
+                ? `<p class="due-line"><span>Deadline</span>${escapeText(item.due.label)}<br>${escapeText(item.due.left)}</p>`
+                : "";
+            const cls = item.gap ? "gap" : item.kind === "note" ? "note" : "";
+            const dueAt = item.due && item.due.at ? Date.parse(item.due.at) : "";
+            return `<article class="card ${cls} ${done ? "done" : ""}" data-kind="${item.kind}" data-due="${dueAt}">
+                <div class="row">${check}<div class="body">
+                    ${name}
+                    <p class="what">${escapeText(item.what)}</p>
+                    ${description}
+                    ${deadline}
+                </div></div>
+            </article>`;
+        }
+
+        function escapeText(value) {
+            return String(value).replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+            }[char]));
+        }
+
+        renderPeople();
+        renderPlan();
+    </script>
+</body>
+</html>
