@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo passenger login</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #273934;
+            background: #f3f5f4;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        main {
+            width: min(100%, 400px);
+            padding: 32px;
+            border: 1px solid #e2e8e5;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 12px 32px rgb(39 57 52 / 10%);
+        }
+
+        .logo {
+            display: block;
+            width: 150px;
+            height: auto;
+            margin: 0 auto 28px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        p {
+            margin: 10px 0 24px;
+            color: #66736e;
+            text-align: center;
+        }
+
+        .passengers {
+            display: grid;
+            gap: 12px;
+        }
+
+        button {
+            min-height: 48px;
+            border: 1px solid #006564;
+            border-radius: 8px;
+            background: #fff;
+            color: #006564;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        button:hover,
+        button:focus-visible {
+            background: #006564;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <img class="logo" src="https://companieslogo.com/img/orig/0293.HK-ef2d48dd.png?t=1746518351" alt="Cathay Pacific">
+        <h1>Demo passenger login</h1>
+        <p>Select a passenger to continue.</p>
+        <div class="passengers" aria-label="Choose a passenger">
+            <button type="button" data-passenger="1">Passenger 1</button>
+            <button type="button" data-passenger="2">Passenger 2</button>
+            <button type="button" data-passenger="3">Passenger 3</button>
+            <button type="button" data-passenger="4">Passenger 4</button>
+        </div>
+    </main>
+    <script>
+        document.querySelectorAll("[data-passenger]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const passengerId = button.dataset.passenger;
+                sessionStorage.setItem("vera-passenger-id", passengerId);
+                const destination = new URL("./index.html", window.location.href);
+                destination.searchParams.set("passenger", passengerId);
+                window.location.assign(destination.href);
+            });
+        });
+    </script>
+</body>
+</html>

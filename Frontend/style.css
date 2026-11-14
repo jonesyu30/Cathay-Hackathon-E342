@@ -125,7 +125,10 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
+    position: relative;
+    z-index: 5;
 }
+.header-logo { pointer-events: none; }
 
 .icon-btn {
     background: none;
@@ -134,9 +137,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 36px;
+    min-height: 36px;
     opacity: 0.7;
     transition: opacity 0.2s ease;
+    position: relative;
+    z-index: 2;
 }
+a.icon-btn { text-decoration: none; color: inherit; }
+#close-plan { min-width: 44px; min-height: 44px; z-index: 6; }
 
 .icon-btn:hover {
     opacity: 1;
@@ -158,6 +167,8 @@ body {
 .screen-view.hidden {
     display: none !important;
 }
+html.open-chat #screen-welcome { display: none !important; }
+html.open-chat #screen-chat { display: flex !important; }
 
 /* Scrollbar Formatting */
 .custom-scrollbar {
@@ -367,7 +378,7 @@ body {
     background-color: var(--cathay-light-bg);
     color: #1f2937;
     padding: 16px;
-    border-radius: 16px;
+    border: 1px solid var(--border-color);
     border-top-left-radius: 2px;
     max-width: 88%;
     font-size: 14.5px;
@@ -375,10 +386,9 @@ body {
 }
 
 .chat-bubble-sent {
-    background-color: var(--cathay-dark);
-    color: #ffffff;
+    background-color: #e2ece7;
+    color: #2d2d2d;
     padding: 12px 16px;
-    border-radius: 16px;
     border-top-right-radius: 2px;
     max-width: 80%;
     font-size: 14px;
@@ -477,4 +487,158 @@ body {
     justify-content: center;
     gap: 4px;
     padding-top: 4px;
+}
+
+/* Message Bubbles - Cathay Rounded Style */
+.chat-bubble-received,
+.chat-bubble-sent {
+    min-width: 0;
+    flex-shrink: 0;
+    overflow-wrap: anywhere;
+}
+
+.chat-bubble-received {
+    background-color: var(--cathay-light-bg);
+    color: #1f2937;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    max-width: 88%;
+    font-size: 14.5px;
+    line-height: 1.5;
+    align-self: flex-start;
+}
+
+.chat-bubble-received.has-action-buttons {
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--cathay-light-bg);
+}
+
+.chat-bubble-received.has-action-buttons .chat-bubble-text {
+    padding: 16px;
+}
+
+.chat-bubble-received.has-action-buttons .chat-bubble-text > * + * {
+    margin-top: 0.75em;
+}
+
+.chat-bubble-received a {
+    color: var(--cathay-teal);
+    text-decoration: underline;
+}
+
+.chat-bubble-received a:hover {
+    color: var(--cathay-teal-hover);
+}
+
+.chat-bubble-received > * + * {
+    margin-top: 0.75em;
+}
+
+/* Stacked Action Buttons */
+.chat-action-button-group {
+    display: flex;
+    flex-direction: column;
+    background-color: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    width: 100%;
+}
+
+.chat-action-btn-row {
+    width: 100%;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-action-btn-row:last-child {
+    border-bottom: none;
+}
+
+.chat-action-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 14px 20px;
+    background-color: #ffffff;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    color: var(--cathay-teal);
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    user-select: none;
+    text-align: center;
+}
+
+.chat-action-btn:hover {
+    background-color: #f0f7f6;
+    color: var(--cathay-teal-hover);
+}
+
+.chat-action-btn:active {
+    background-color: #e2ece7;
+}
+
+.chat-action-btn-label {
+    flex: 1;
+    text-align: center;
+}
+
+/* Cathay Citation / Reference Link Chips */
+.cathay-citation-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 4px;
+}
+
+.cathay-citation-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    color: var(--cathay-teal);
+    font-size: 12px;
+    font-weight: 500;
+    text-decoration: none !important;
+    max-width: 170px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.cathay-citation-chip:hover {
+    border-color: var(--cathay-teal);
+    background-color: #f0f7f6;
+    color: var(--cathay-teal-hover);
+    text-decoration: none !important;
+}
+
+.cathay-citation-chip svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.chat-bubble-sent {
+    background-color: #e2ece7;
+    color: #2d2d2d;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.4;
+    align-self: flex-end;
 }

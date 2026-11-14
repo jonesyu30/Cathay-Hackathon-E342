@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+google-genai
+asyncpg
+cloud-sql-python-connector[asyncpg]
+pgvector
+python-dotenv
+mcp
+pydantic
