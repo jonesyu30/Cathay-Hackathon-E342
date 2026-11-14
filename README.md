@@ -1,4 +1,4 @@
-# Ask Care — Cathay Pacific Accessibility & Travel Assistant
+# Ask CARE — Cathay Pacific Accessibility & Travel Assistant
 
 **Ask Care** is an AI-powered accessibility and travel assistance web application built for Cathay Pacific passengers. It combines a conversational AI specialist with a guided accessibility questionnaire, a personalized curb-to-cabin journey timeline, and interactive pre-flight preparation tasks.
 
