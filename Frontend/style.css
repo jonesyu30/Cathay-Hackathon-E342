@@ -106,7 +106,7 @@ body {
 }
 
 .header-spacer {
-    width: 24px;
+    width: 76px;
 }
 
 .header-logo {
@@ -118,13 +118,14 @@ body {
 .header-logo img {
     height: 24px;
     width: auto;
-    padding-left: 2rem;
 }
 
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: flex-end;
+    gap: 4px;
+    min-width: 76px;
     position: relative;
     z-index: 5;
 }
@@ -775,4 +776,87 @@ html.open-chat #screen-chat { display: flex !important; }
 
 .btn-cancel-prompt:hover {
     color: var(--text-main);
+}
+
+/* ================= FEEDBACK MODAL WIDGET ================= */
+.feedback-modal-card {
+    text-align: left;
+}
+
+.feedback-modal-card h2 {
+    text-align: center;
+}
+
+.feedback-modal-subtitle {
+    text-align: center;
+    margin-bottom: 14px !important;
+}
+
+.feedback-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.feedback-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.feedback-field input,
+.feedback-field select,
+.feedback-field textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-main);
+    background: #ffffff;
+}
+
+.feedback-field input:focus,
+.feedback-field select:focus,
+.feedback-field textarea:focus {
+    outline: none;
+    border-color: var(--cathay-teal);
+}
+
+.feedback-status {
+    margin: 0 !important;
+    font-size: 13px !important;
+    font-weight: 500;
+    text-align: center;
+}
+
+.feedback-status.hidden {
+    display: none;
+}
+
+.feedback-status.success {
+    color: #0f766e !important;
+}
+
+.feedback-status.error {
+    color: #b91c1c !important;
+}
+
+.staff-insights-footer-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.staff-insights-footer-link:hover {
+    color: var(--cathay-teal);
 }

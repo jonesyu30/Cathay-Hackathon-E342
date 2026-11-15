@@ -32,6 +32,8 @@ from catalog import ensure_catalog, fetch_catalog, fetch_catalog_offline
 from import_catalog import import_catalog
 from task_replies import SCHEMA as TASK_SCHEMA
 from task_replies import router as task_replies_router
+from feedback import SCHEMA as FEEDBACK_SCHEMA
+from feedback import router as feedback_router
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 load_dotenv(".env")
@@ -246,6 +248,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         async with pool.acquire() as conn:
             await conn.execute(SCHEMA)
             await conn.execute(TASK_SCHEMA)
+            await conn.execute(FEEDBACK_SCHEMA)
             await conn.execute(CODE_SCHEMA)
             await conn.execute(CONDITION_SCHEMA)
             try:
@@ -277,6 +280,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(title="Ask CARE", lifespan=lifespan)
 app.include_router(task_replies_router)
+app.include_router(feedback_router)
 
 
 @app.get("/health")
@@ -661,6 +665,17 @@ async def staff_page() -> FileResponse:
 @app.get("/staff-roster.js")
 async def staff_roster_script() -> FileResponse:
     return frontend_file("staff-roster.js")
+
+
+@app.get("/feedback-widget.js")
+async def feedback_widget_script() -> FileResponse:
+    return frontend_file("feedback-widget.js")
+
+
+@app.get("/feedback-insights")
+@app.get("/feedback-insights.html")
+async def feedback_insights_page() -> FileResponse:
+    return frontend_file("feedback-insights.html")
 
 
 @app.get("/style.css")
