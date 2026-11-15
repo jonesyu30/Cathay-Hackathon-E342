@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ask Care - Cathay Assistant</title>
+    <title>Ask CARE - Cathay Assistant</title>
 
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,23 +31,54 @@
 
             <!-- Window Action Buttons -->
             <div class="header-actions">
-                <button class="icon-btn" title="Close">
+                <button id="btn-close-chat" class="icon-btn hidden" type="button" title="Close">
                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23333333' stroke-width='2.2'><line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/></svg>"
                         alt="Close">
                 </button>
             </div>
         </header>
 
+        <!-- SCREEN 0: DEMO PASSENGER LOGIN -->
+        <div id="screen-login" class="screen-view login-container custom-scrollbar">
+            <div class="login-hero">
+                <div class="hero-icon-box">
+                    <img src="https://www.cathaypacific.com/verachatbot/assets/img/start_page/icon_ai_chatbot.svg" alt="Ask CARE Icon">
+                </div>
+                <h1 class="welcome-title login-title">Ask CARE</h1>
+                <p class="login-subtitle">Demo passenger login — select a profile to enter the conversation.</p>
+            </div>
+
+            <div class="login-passengers" aria-label="Choose a passenger">
+                <button type="button" class="passenger-btn" data-passenger="1">Passenger 1</button>
+                <button type="button" class="passenger-btn" data-passenger="2">Passenger 2</button>
+                <button type="button" class="passenger-btn" data-passenger="3">Passenger 3</button>
+                <button type="button" class="passenger-btn" data-passenger="4">Passenger 4</button>
+            </div>
+
+            <!-- In-phone prompt: Continue or Start new conversation -->
+            <div id="passenger-prompt-modal" class="phone-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="prompt-passenger-title">
+                <div class="phone-modal-card">
+                    <h2 id="prompt-passenger-title">Passenger 1</h2>
+                    <p id="prompt-passenger-desc">Would you like to continue your previous conversation or start a new conversation?</p>
+                    <div class="phone-modal-actions">
+                        <button type="button" id="btn-continue-chat" class="btn-start-chat">Continue conversation</button>
+                        <button type="button" id="btn-new-chat" class="btn-secondary-chat">Start new conversation</button>
+                        <button type="button" id="btn-cancel-prompt" class="btn-cancel-prompt">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- SCREEN 1: WELCOME SCREEN -->
-        <div id="screen-welcome" class="screen-view welcome-container custom-scrollbar">
+        <div id="screen-welcome" class="screen-view welcome-container custom-scrollbar hidden">
             <div class="welcome-hero">
 
                 <!-- Hero AI Spark Icon -->
                 <div class="hero-icon-box">
-                    <img src="https://www.cathaypacific.com/verachatbot/assets/img/start_page/icon_ai_chatbot.svg" alt="Ask Care Icon">
+                    <img src="https://www.cathaypacific.com/verachatbot/assets/img/start_page/icon_ai_chatbot.svg" alt="Ask CARE Icon">
                 </div>
 
-                <h1 class="welcome-title">Ask Care</h1>
+                <h1 class="welcome-title">Ask CARE</h1>
 
                 <!-- Feature Points -->
                 <div class="feature-list">
@@ -126,9 +157,9 @@
                 </div>
 
                 <!-- Assistant Message Block -->
-                <div class="message-meta">Care 6:43 pm</div>
+                <div class="message-meta">CARE 18:43</div>
                 <div class="chat-bubble-received">
-                    Hi! I'm Care, your AI travel assistant. I can help with flights, baggage, membership and more. How
+                    Hi! I'm CARE, your AI travel assistant. I can help with flights, baggage, membership and more. How
                     can I assist you today?
                 </div>
 
@@ -160,7 +191,7 @@
                 </form>
 
                 <div class="footer-disclaimer">
-                    <span>Care is always learning—verify important details.</span>
+                    <span>CARE is always learning—verify important details.</span>
                     <a href="#" class="inline-link" style="font-size: 11px;">
                         Learn more
                         <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23006564' stroke-width='2'><path stroke-linecap='round' stroke-linejoin='round' d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14'/></svg>"

@@ -147,19 +147,27 @@ function noticeFor(id) {
         links: hrefs.map(href => ({ href }))
     };
 }
-function referLine(href) {
-    return `For more information, please refer to this <a href="${href}" target="_blank" rel="noopener noreferrer">page</a>.`;
+function referLines(links) {
+    if (!links || !links.length) return "";
+    if (links.length === 1) {
+        return `For more information, please refer to this <a href="${links[0].href}" target="_blank" rel="noopener noreferrer">page</a>.`;
+    }
+    const items = links.map((link, i) => `<a href="${link.href}" target="_blank" rel="noopener noreferrer">page ${i + 1}</a>`);
+    const joined = items.length === 2
+        ? `${items[0]} and ${items[1]}`
+        : `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`;
+    return `For more information, please refer to ${joined}.`;
 }
 function noticeBody(id) {
     const notice = noticeFor(id);
     if (!notice) return "";
-    const lines = notice.links.map(link => `<p class="notice-links">${referLine(link.href)}</p>`).join("");
-    return `<div class="svc-notice"><p>${notice.summary}</p>${lines}</div>`;
+    const linksHtml = notice.links.length ? `<p class="notice-links">${referLines(notice.links)}</p>` : "";
+    return `<div class="svc-notice"><p>${notice.summary}</p>${linksHtml}</div>`;
 }
 function moreInfo(id) {
     const notice = noticeFor(id);
     if (!notice || !notice.links.length) return "";
-    return notice.links.map(link => `<p class="request-more">${referLine(link.href)}</p>`).join("");
+    return `<p class="request-more">${referLines(notice.links)}</p>`;
 }
 function requestedHtml() {
     const ids = Object.entries(state.decisions).filter(([, value]) => value === "yes").map(([id]) => id);
@@ -1349,7 +1357,7 @@ function postChat(role, text) {
         meta.className = "message-meta";
         meta.dataset.added = "1";
         const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }).toLowerCase();
-        meta.textContent = `Care ${time}`;
+        meta.textContent = `CARE ${time}`;
         box.appendChild(meta);
     }
     const bubble = document.createElement("div");

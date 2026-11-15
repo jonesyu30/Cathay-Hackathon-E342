@@ -1,12 +1,12 @@
-# Ask Care — Cathay Pacific Accessibility & Travel Assistant
+# Ask CARE — Cathay Pacific Accessibility & Travel Assistant
 
-**Ask Care** is an AI-powered accessibility and travel assistance web application built for Cathay Pacific passengers. It combines a conversational AI specialist with a guided accessibility questionnaire, a personalized curb-to-cabin journey timeline, and interactive pre-flight preparation tasks.
+**Ask CARE** is an AI-powered accessibility and travel assistance web application built for Cathay Pacific passengers. It combines a conversational AI specialist with a guided accessibility questionnaire, a personalized curb-to-cabin journey timeline, and interactive pre-flight preparation tasks.
 
 ---
 
 ## Key Features
 
-- **Ask Care AI Chat (`/`)**  
+- **Ask CARE AI Chat (`/`)**  
   Conversational travel and accessibility specialist powered by Google Cloud Customer Engagement Suite (CES / CX Agent Studio). Grounded in official Cathay Pacific and Hong Kong International Airport (HKIA) accessibility policies, supporting rich Markdown responses, interactive quick-reply options, and direct navigation to the questionnaire and trip plan.
 
 - **Accessibility Needs Questionnaire (`/survey.html`)**  
@@ -28,7 +28,7 @@
 │   ├── knowledge.py        # pgvector policy chunk schema & similarity search
 │   └── test_ces.py         # Unit tests for CES session handling & retry logic
 ├── Frontend/
-│   ├── index.html          # Ask Care main chat interface
+│   ├── index.html          # Ask CARE main chat interface
 │   ├── main.js             # Chat UI logic, option parsing, and session state
 │   ├── style.css           # Shared phone-frame shell & chat styling
 │   ├── questionnaire.html  # Accessibility Needs Questionnaire view

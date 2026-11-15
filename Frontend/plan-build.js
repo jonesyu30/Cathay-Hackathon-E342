@@ -605,7 +605,7 @@ const CARE_CONTACT = {
     phone: "+852 2747 3333",
     tel: "+85227473333",
     hours: "Hong Kong · daily 08:00–20:00",
-    note: "Care does not place the call. Use this brief while you speak.",
+    note: "CARE does not place the call. Use this brief while you speak.",
 };
 
 function serviceNeedsBooking(serviceId, booking) {

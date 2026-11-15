@@ -216,8 +216,8 @@
                 : "";
             const actionText = actionLine(item);
             const answer = saved ? `<p class="answer">${escapeText(saved)}</p>` : "";
-            const action = item.kind === "task" && actionText
-                ? item.reply
+            const action = actionText
+                ? item.kind === "task" && item.reply
                     ? `<a class="what" href="${formHref}">${escapeText(actionText)}</a>${answer}`
                     : `<p class="what">${escapeText(actionText)}</p>`
                 : "";

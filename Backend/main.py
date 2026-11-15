@@ -1,5 +1,5 @@
 from fastapi.staticfiles import StaticFiles
-"""Local Ask Care API: FastAPI, the MCP Python SDK, Google Cloud SQL, and CES/Vertex AI Gemini."""
+"""Local Ask CARE API: FastAPI, the MCP Python SDK, Google Cloud SQL, and CES/Vertex AI Gemini."""
 
 import asyncio
 import datetime
@@ -77,7 +77,7 @@ CES_DEPLOYMENT_ID = os.environ.get("CES_DEPLOYMENT_ID", "")
 ces_creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
 
 SYSTEM_PROMPT = (
-    "You are Care, Cathay Pacific's AI travel assistant. "
+    "You are CARE, Cathay Pacific's AI travel assistant. "
     "Help with flights, baggage, membership, and bookings. "
     "Reply in a few sentences. "
     "The open chat is temporary. "
@@ -147,8 +147,8 @@ TOOLS = [
 ]
 
 mcp = MCPServer(
-    "Ask Care",
-    instructions="Tools for the Cathay Ask Care assistant.",
+    "Ask CARE",
+    instructions="Tools for the Cathay Ask CARE assistant.",
 )
 
 
@@ -275,7 +275,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await connector.close_async()
 
 
-app = FastAPI(title="Ask Care", lifespan=lifespan)
+app = FastAPI(title="Ask CARE", lifespan=lifespan)
 app.include_router(task_replies_router)
 
 

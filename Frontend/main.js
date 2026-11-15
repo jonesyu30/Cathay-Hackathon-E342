@@ -1,20 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
       // DOM Elements
+      const loginScreen = document.getElementById('screen-login');
       const welcomeScreen = document.getElementById('screen-welcome');
       const chatScreen = document.getElementById('screen-chat');
+      const btnCloseChat = document.getElementById('btn-close-chat');
       const btnWelcomeView = document.getElementById('btn-welcome-view');
       const btnChatView = document.getElementById('btn-chat-view');
       const btnStartChat = document.getElementById('btn-start-chat-action');
       const chatInput = document.getElementById('chat-user-input');
       const chatMessagesContainer = document.getElementById('chat-messages-container');
-      const optionChips = document.querySelectorAll('.option-chip');
-      const MEMORY_KEY = 'vera-working-memory';
-      const SESSION_KEY = 'vera-ces-session';
+      const promptModal = document.getElementById('passenger-prompt-modal');
+      const promptTitle = document.getElementById('prompt-passenger-title');
+      const btnContinueChat = document.getElementById('btn-continue-chat');
+      const btnNewChat = document.getElementById('btn-new-chat');
+      const btnCancelPrompt = document.getElementById('btn-cancel-prompt');
+      const initialChatHTML = chatMessagesContainer.innerHTML;
+      const PASSENGER_KEY = 'vera-passenger-id';
+      const MEMORY_PREFIX = 'vera-working-memory-';
+      const SESSION_PREFIX = 'vera-ces-session-';
       const MEMORY_LIMIT = 8;
 
-      function loadWorkingMemory() {
+      let currentPassengerId = String((window.CathayPassenger && window.CathayPassenger.id) || sessionStorage.getItem(PASSENGER_KEY) || '1');
+      let pendingPassengerId = null;
+
+      function memoryKey(pid = currentPassengerId) {
+        return `${MEMORY_PREFIX}${pid}`;
+      }
+
+      function sessionKey(pid = currentPassengerId) {
+        return `${SESSION_PREFIX}${pid}`;
+      }
+
+      function loadWorkingMemory(pid = currentPassengerId) {
         try {
-          const saved = JSON.parse(sessionStorage.getItem(MEMORY_KEY) || '[]');
+          const saved = JSON.parse(sessionStorage.getItem(memoryKey(pid)) || '[]');
           if (!Array.isArray(saved)) return [];
           return saved.filter(turn =>
             turn && (turn.role === 'user' || turn.role === 'assistant') && typeof turn.content === 'string'
@@ -24,61 +43,136 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      let workingMemory = loadWorkingMemory();
-      let sessionId = sessionStorage.getItem(SESSION_KEY);
+      let workingMemory = [];
+      let sessionId = null;
       let requestQueue = Promise.resolve();
-      let lastUserTurnPrompt = '';
-      workingMemory.forEach(turn => {
-        if (turn.role === 'user') {
-          lastUserTurnPrompt = turn.content;
-          appendUserMessage(turn.content, turn.timestamp);
+
+      function bindQuickChips() {
+        chatMessagesContainer.querySelectorAll('.option-chip').forEach(chip => {
+          chip.addEventListener('click', () => {
+            const promptText = chip.getAttribute('data-prompt') || chip.innerText.trim();
+            sendToBackend(promptText);
+          });
+        });
+      }
+
+      function loadPassengerChat(pid, { reset = false } = {}) {
+        currentPassengerId = String(pid);
+        sessionStorage.setItem(PASSENGER_KEY, currentPassengerId);
+
+        if (reset) {
+          sessionStorage.removeItem(memoryKey(currentPassengerId));
+          sessionStorage.removeItem(sessionKey(currentPassengerId));
+          workingMemory = [];
+          sessionId = null;
         } else {
-          appendAssistantMessage(turn.content, lastUserTurnPrompt);
+          workingMemory = loadWorkingMemory(currentPassengerId);
+          sessionId = sessionStorage.getItem(sessionKey(currentPassengerId));
         }
-      });
+
+        chatMessagesContainer.innerHTML = initialChatHTML;
+        bindQuickChips();
+
+        let lastUserTurnPrompt = '';
+        workingMemory.forEach(turn => {
+          if (turn.role === 'user') {
+            lastUserTurnPrompt = turn.content;
+            appendUserMessage(turn.content, turn.timestamp);
+          } else {
+            appendAssistantMessage(turn.content, lastUserTurnPrompt);
+          }
+        });
+      }
 
       function rememberTurn(role, content, timestamp) {
         const turn = { role, content };
         if (role === 'user' && timestamp) turn.timestamp = timestamp;
         workingMemory.push(turn);
         workingMemory = workingMemory.slice(-MEMORY_LIMIT);
-        sessionStorage.setItem(MEMORY_KEY, JSON.stringify(workingMemory));
+        sessionStorage.setItem(memoryKey(currentPassengerId), JSON.stringify(workingMemory));
       }
 
       // 1. Navigation View Switcher Logic
       window.switchScreenView = function(targetView) {
-        if (targetView === 'welcome') {
-          welcomeScreen.classList.remove('hidden');
-          chatScreen.classList.add('hidden');
-          if (btnWelcomeView) btnWelcomeView.className = 'demo-btn demo-btn-active';
-          if (btnChatView) btnChatView.className = 'demo-btn demo-btn-inactive';
-        } else {
-          welcomeScreen.classList.add('hidden');
-          chatScreen.classList.remove('hidden');
-          if (btnChatView) btnChatView.className = 'demo-btn demo-btn-active';
-          if (btnWelcomeView) btnWelcomeView.className = 'demo-btn demo-btn-inactive';
-        }
+        if (loginScreen) loginScreen.classList.toggle('hidden', targetView !== 'login');
+        if (welcomeScreen) welcomeScreen.classList.toggle('hidden', targetView !== 'welcome');
+        if (chatScreen) chatScreen.classList.toggle('hidden', targetView !== 'chat');
+        if (btnCloseChat) btnCloseChat.classList.toggle('hidden', targetView === 'login');
+        if (promptModal && targetView !== 'login') promptModal.classList.add('hidden');
+        if (btnWelcomeView) btnWelcomeView.className = targetView === 'welcome' ? 'demo-btn demo-btn-active' : 'demo-btn demo-btn-inactive';
+        if (btnChatView) btnChatView.className = targetView === 'chat' ? 'demo-btn demo-btn-active' : 'demo-btn demo-btn-inactive';
       };
 
-      // Event Listeners for Demo Toolbar
+      // Event Listeners for Demo Toolbar & Close (X) Button
       if (btnWelcomeView) btnWelcomeView.addEventListener('click', () => switchScreenView('welcome'));
       if (btnChatView) btnChatView.addEventListener('click', () => switchScreenView('chat'));
+      if (btnCloseChat) {
+        btnCloseChat.addEventListener('click', () => {
+          switchScreenView('login');
+        });
+      }
 
-      // 2. Start Chat Action Button
-      btnStartChat.addEventListener('click', () => {
-        switchScreenView('chat');
+      // Demo Passenger Login & Continue/New Prompt
+      document.querySelectorAll('.passenger-btn[data-passenger]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          pendingPassengerId = btn.dataset.passenger;
+          if (promptTitle) promptTitle.textContent = `Passenger ${pendingPassengerId}`;
+          if (promptModal) promptModal.classList.remove('hidden');
+        });
       });
 
+      if (btnContinueChat) {
+        btnContinueChat.addEventListener('click', () => {
+          if (!pendingPassengerId) return;
+          const pid = pendingPassengerId;
+          pendingPassengerId = null;
+          if (promptModal) promptModal.classList.add('hidden');
+          loadPassengerChat(pid, { reset: false });
+          switchScreenView('chat');
+          scrollToBottom();
+        });
+      }
+
+      if (btnNewChat) {
+        btnNewChat.addEventListener('click', () => {
+          if (!pendingPassengerId) return;
+          const pid = pendingPassengerId;
+          pendingPassengerId = null;
+          if (promptModal) promptModal.classList.add('hidden');
+          loadPassengerChat(pid, { reset: true });
+          switchScreenView('chat');
+          chatMessagesContainer.scrollTop = 0;
+        });
+      }
+
+      if (btnCancelPrompt) {
+        btnCancelPrompt.addEventListener('click', () => {
+          pendingPassengerId = null;
+          if (promptModal) promptModal.classList.add('hidden');
+        });
+      }
+
+      // 2. Start Chat Action Button
+      if (btnStartChat) {
+        btnStartChat.addEventListener('click', () => {
+          loadPassengerChat(currentPassengerId, { reset: false });
+          switchScreenView('chat');
+        });
+      }
+
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('view') === 'chat' || workingMemory.length > 0) {
+      if (urlParams.get('view') === 'chat') {
+        loadPassengerChat(currentPassengerId, { reset: false });
         switchScreenView('chat');
         scrollToBottom();
+      } else {
+        switchScreenView('login');
       }
 
       async function sendToBackend(text) {
         const sentAt = new Date().toISOString();
         appendUserMessage(text, sentAt);
-        const pending = appendAssistantMessage('Care is thinking...');
+        const pending = appendAssistantMessage('CARE is thinking...');
         scrollToBottom();
 
         try {
@@ -93,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
               throw new Error(data.detail || 'Request failed');
             }
             sessionId = data.session_id;
-            sessionStorage.setItem(SESSION_KEY, sessionId);
+            sessionStorage.setItem(sessionKey(currentPassengerId), sessionId);
             rememberTurn('user', text, sentAt);
             rememberTurn('assistant', data.reply);
             return data;
@@ -107,8 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
           pending.meta.remove();
           pending.bubble.remove();
           const message = error instanceof TypeError
-            ? 'Care could not answer. Is the backend and Ollama running?'
-            : (error.message || 'Care could not answer. Is the backend and Ollama running?');
+            ? 'CARE could not answer. Please try again.'
+            : (error.message || 'CARE could not answer. Please try again.');
           appendAssistantMessage(message, text);
         }
         scrollToBottom();
@@ -121,14 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
         sendToBackend(text);
       };
-
-      // 4. Quick Action Chip Click Handler
-      optionChips.forEach(chip => {
-        chip.addEventListener('click', () => {
-          const promptText = chip.getAttribute('data-prompt') || chip.innerText.trim();
-          sendToBackend(promptText);
-        });
-      });
 
       // Helper function to append user messages
       function appendUserMessage(message, timestamp = new Date().toISOString()) {
@@ -145,8 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       function formatMessageTime(timestamp) {
         return new Date(timestamp)
-          .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          .toLowerCase();
+          .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
       }
 
       // Cathay Brushwing SVG icon used for reference/citation chips
@@ -394,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const meta = document.createElement('div');
         meta.className = 'message-meta';
-        meta.textContent = "Care " + timeString;
+        meta.textContent = "CARE " + timeString;
         
         const botBubble = document.createElement('div');
         botBubble.className = 'chat-bubble-received';

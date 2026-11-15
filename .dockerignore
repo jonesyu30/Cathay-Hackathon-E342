@@ -1,12 +1,9 @@
 .DS_Store
-.env
 .env.example
 .venv/
 __pycache__/
 *.pyc
 ~$*
-
-# Local workbooks and Cathay source files. Do not commit.
-*.xlsx
-*.csv
-*.pdf
+.git/
+local_backup.sql
+*.sql
