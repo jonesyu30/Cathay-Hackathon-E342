@@ -17,6 +17,9 @@
 - **Personalized Assistance Plan (`/plan.html`)**  
   Generates a tailored step-by-step travel timeline (*Before you fly*, *At departure*, *On board*, *In transit*, and *On arrival*) based on the passenger's booking and submitted questionnaire responses, complete with progress filters and a Customer Care call brief.
 
+- **Accessibility Service Feedback & Staff Insights (`/feedback-insights.html`)**  
+  Every page includes a header feedback button next to the Close (`X`) button allowing passengers to submit free-text preferences for additional accessibility services (`POST /api/feedback`), stored in a dedicated `service_feedback` Cloud SQL table. Staff can view aggregated category/service bar charts and filterable submissions on `/feedback-insights.html`.
+
 ---
 
 ## Project Structure
@@ -27,12 +30,16 @@
 │   ├── catalog.py          # Cloud SQL PostgreSQL catalog schema & live data fetcher
 │   ├── import_catalog.py   # Workbook importer for initializing catalog tables
 │   ├── task_replies.py     # API router & schema for saving passenger task form responses
+│   ├── feedback.py         # API router & schema for passenger service preference feedback
 │   ├── knowledge.py        # pgvector policy chunk schema & similarity search
-│   └── test_ces.py         # Unit tests for CES session handling & retry logic
+│   ├── test_ces.py         # Unit tests for CES session handling & retry logic
+│   └── test_feedback.py    # Unit tests for feedback validation & aggregation
 ├── Frontend/
-│   ├── index.html          # Ask CARE main chat interface
-│   ├── main.js             # Chat UI logic, option parsing, and session state
-│   ├── style.css           # Shared phone-frame shell & chat styling
+│   ├── index.html          # Ask CARE main chat interface & in-phone demo passenger login
+│   ├── main.js             # Chat UI logic, option parsing, and per-passenger session state
+│   ├── style.css           # Shared phone-frame shell, chat, and modal styling
+│   ├── feedback-widget.js  # Shared header feedback button, free-text modal, and staff link
+│   ├── feedback-insights.html # Staff feedback visualization & summary dashboard
 │   ├── questionnaire.html  # Accessibility Needs Questionnaire view
 │   ├── questionnaire.js    # Multi-step survey engine, leg matching, and tag assignment
 │   ├── questionnaire.css   # Questionnaire styling
@@ -40,7 +47,9 @@
 │   ├── plan-build.js       # Journey timeline & task generation engine
 │   ├── plan-data.js        # Offline fallback catalog snapshot
 │   ├── plan.css            # Assistance plan styling
-│   ├── demo-login.html     # Demo passenger profile selector
+│   ├── task-form.html      # Interactive task specification form view
+│   ├── task-form.js        # Dynamic task form renderer & API integration
+│   ├── demo-login.html     # Standalone demo passenger profile selector
 │   └── passenger-context.js# Shared passenger ID & session state helper
 ├── Dockerfile              # Container image definition for Google Cloud Run
 └── requirements.txt        # Python dependencies
