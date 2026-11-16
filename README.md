@@ -1,4 +1,4 @@
-_2026 Cathay Hackathon Award winning repository - Outstanding Development Team_
+_Cathay Hackathon 2026 Award winning repository - Outstanding Development Team_
 
 
 # Ask CARE — Cathay Pacific Accessibility & Travel Assistant
@@ -107,3 +107,15 @@ DB_NAME=cathay
 ```bash
 PYTHONPATH=Backend python3 -m unittest discover -s Backend -p "test_*.py"
 ```
+
+---
+
+## Screenshots 
+
+<p align="center">
+  <img width="19%" alt="From fragmented support to seamless travel Cathay CARE" src="https://github.com/user-attachments/assets/b44fb543-f3b3-42c2-8efd-b85fc6df1ee8" />
+  <img width="19%" alt="From fragmented support to seamless travel Cathay CARE-2" src="https://github.com/user-attachments/assets/b39c6eba-4c90-4a02-a6bb-9427c41b3bc8" />
+  <img width="19%" alt="From fragmented support to seamless travel Cathay CARE-3" src="https://github.com/user-attachments/assets/eff54a09-ae71-467a-838c-6c9804b0ea11" />
+  <img width="19%" alt="From fragmented support to seamless travel Cathay CARE-4" src="https://github.com/user-attachments/assets/30b779c6-deb2-488b-a0a7-21d50b743d3a" />
+  <img width="19%" alt="From fragmented support to seamless travel Cathay CARE-5" src="https://github.com/user-attachments/assets/308a495e-2b0a-46f3-ad07-a62338988485" />
+</p>
